@@ -11,7 +11,7 @@ function Navbar() {
 
   return (
     <div className="flex fixed bottom-0 left-0 right-0 justify-evenly bg-gray-200 py-2">
-      <NavLink to="/" className={linkClasses} end>
+      <NavLink to="/home" className={linkClasses} end>
         <IoHome size={20} />
         <span>Home</span>
       </NavLink>

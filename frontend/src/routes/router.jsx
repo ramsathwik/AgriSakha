@@ -9,7 +9,13 @@ import NotifyLayout from "../pages/NotifyLayout.jsx";
 import Notifications from "../pages/Notifications.jsx";
 import ProtectedRoute from "../components/Protected.jsx";
 import Signup from "../components/signup.jsx";
+import Login from "../components/login.jsx";
+import { Navigate } from "react-router-dom";
 const router = createBrowserRouter([
+  {
+    path: "/login",
+    element: <Login />,
+  },
   {
     path: "/signup",
     element: <Signup />,
@@ -23,6 +29,11 @@ const router = createBrowserRouter([
         children: [
           {
             index: true,
+            element: <Navigate to="/home" replace />,
+          },
+
+          {
+            path: "/home",
             element: <Home />,
           },
           {

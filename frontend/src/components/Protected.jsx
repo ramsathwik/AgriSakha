@@ -4,8 +4,7 @@ function ProtectedRoute() {
   const expiry = localStorage.getItem("expiry");
 
   const isValid = token && expiry && new Date().getTime() < Number(expiry);
-  //   return <>{isValid ? <Outlet /> : <Navigate to="/signup" replace />}</>;
-  return <Outlet></Outlet>;
+  return <>{isValid ? <Outlet /> : <Navigate to="/signup" replace />}</>;
 }
 
 export default ProtectedRoute;
