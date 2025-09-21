@@ -4,7 +4,7 @@ import { verifyJWT } from "../utils/JwtUtils.js";
 import Farmer from "../models/Farmer.js";
 
 export const verifyFarmerJWT = asyncHandler(async (req, res, next) => {
-    const token = req.cookies?.accessToken;
+    const token = req.cookies?.accessToken || req.headers?.authorization?.split("Bearer ")[1];
 
     if (!token) {
         throw new ApiError(401, "Unauthorized request. No token provided.");
