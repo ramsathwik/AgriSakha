@@ -1,26 +1,15 @@
 import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 
 const LocationSchema = new mongoose.Schema({
     _id: false,
     fullAddress: String,
     district: {
         type: String,
-        required: true,
         enum: [
-            "Alappuzha",
-            "Ernakulam",
-            "Idukki",
-            "Kannur",
-            "Kasaragod",
-            "Kollam",
-            "Kottayam",
-            "Kozhikode",
-            "Malappuram",
-            "Palakkad",
-            "Pathanamthitta",
-            "Thiruvananthapuram",
-            "Thrissur",
-            "Wayanad"
+            "Alappuzha", "Ernakulam", "Idukki", "Kannur", "Kasaragod",
+            "Kollam", "Kottayam", "Kozhikode", "Malappuram", "Palakkad",
+            "Pathanamthitta", "Thiruvananthapuram", "Thrissur", "Wayanad"
         ]
     },
     location: {
@@ -37,20 +26,51 @@ const LocationSchema = new mongoose.Schema({
 const FarmerSchema = new mongoose.Schema({
     fullName: {
         type: String,
-        required: true
     },
     phone: {
         type: String,
-        required: true
+        required: true,
+        unique: true,
+        index: true
     },
-
     dateOfBirth: Date,
     gender: { type: String, enum: ['male', 'female', 'other'] },
     address: [LocationSchema],
+    
+    phoneOtp: {
+        type: String,
+    },
+    phoneOtpExpires: {
+        type: Date,
+    },
 
-    currentOTP: String,
-    otpGeneratedAt: Date,
+    // Admin contact details (if assigned)
     adminEmail: String,
     adminPhone: String,
     adminName: String
+}, { timestamps: true });
+
+
+// Hash the OTP before saving
+FarmerSchema.pre("save", async function(next) {
+    if (!this.isModified("phoneOtp") || !this.phoneOtp) {
+        return next();
+    }
+    try {
+        const salt = await bcrypt.genSalt(10);
+        this.phoneOtp = await bcrypt.hash(this.phoneOtp, salt);
+        next();
+    } catch (err) {
+        next(err);
+    }
 });
+
+// Method to compare OTP
+FarmerSchema.methods.isOtpCorrect = async function(otp) {
+    if (!this.phoneOtp) return false;
+    return await bcrypt.compare(otp, this.phoneOtp);
+};
+
+
+const Farmer = mongoose.model("Farmer", FarmerSchema);
+export default Farmer;

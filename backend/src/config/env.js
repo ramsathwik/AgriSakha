@@ -11,6 +11,10 @@ const requiredEnvVars = [
   'JWT_EXPIRY',
   'EMAIL_USER',
   'EMAIL_PASS',
+  'TWILIO_ACCOUNT_SID',
+  'TWILIO_AUTH_TOKEN',
+  'TWILIO_PHONE_NUMBER',
+  'SMS_COUNTRY_CODE',
 ];
 
 
@@ -37,6 +41,14 @@ const config = {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  twilio: {
+    accountSid: process.env.TWILIO_ACCOUNT_SID,
+    authToken: process.env.TWILIO_AUTH_TOKEN,
+    phoneNumber: process.env.TWILIO_PHONE_NUMBER,
+  },
+  sms: {
+    countryCode: process.env.SMS_COUNTRY_CODE,
+  }
 };
 
 export default Object.freeze(config);

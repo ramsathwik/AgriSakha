@@ -5,50 +5,78 @@ import rateLimit from 'express-rate-limit';
 import DBconnection from "./src/config/db.js";
 import logger from "./src/utils/logger.js";
 import config from "./src/config/env.js"; 
+import { ApiError } from "./src/utils/ApiError.js";
 
 const app = express();
-app.set('trust proxy', 1);
-app.use(express.json());
+
+app.set('trust proxy', 1); // Trust first proxy
+
+// Middlewares
+app.use(express.json({ limit: "16kb" }));
 app.use(cookieParser());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(cors({
   origin: config.corsOrigin, 
   credentials: true 
 }));
 
+// Rate Limiters
 const authLimiter = rateLimit({
-	windowMs: 15 * 60 * 1000,
-	max: 20,
+	windowMs: 15 * 60 * 1000, // 15 minutes
+	max: 20, // Limit each IP to 20 requests per window
 	standardHeaders: true,
 	legacyHeaders: false,
-    message: 'Too many requests from this IP, please try again after 15 minutes.',
+    message: 'Too many authentication requests from this IP, please try again after 15 minutes.',
+    handler: (req, res, next, options) => {
+        throw new ApiError(options.statusCode, options.message);
+    }
 });
 
 const generalApiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per window
     standardHeaders: true,
     legacyHeaders: false,
     message: 'Too many requests from this IP, please try again after 15 minutes.',
+    handler: (req, res, next, options) => {
+        throw new ApiError(options.statusCode, options.message);
+    }
 });
 
-app.get('/health', (req, res) => {
+// Health Check Route
+app.get('/health', generalApiLimiter, (req, res) => {
     res.status(200).json({ status: 'OK', message: 'Server is healthy.' });
 });
 
+// --- Routes ---
+import authRouter from "./src/routes/auth.routes.js";
 
+// Mount the authentication router with its specific rate limiter
+app.use("/api/v1/auth", authLimiter, authRouter);
+
+
+// --- Global Error Handler ---
 app.use((err, req, res, next) => {
-  logger.error(err.message, { stack: err.stack, path: req.path, statusCode: err.statusCode });
+  
+  if (err instanceof ApiError) {
+    logger.warn(`ApiError: ${err.statusCode} - ${err.message}`, { path: req.path, errors: err.errors });
+    return res.status(err.statusCode).json({
+        success: err.success,
+        message: err.message,
+        errors: err.errors
+    });
+  }
+
+  // Handle unexpected errors
+  logger.error(err.message, { stack: err.stack, path: req.path });
   
   const statusCode = err.statusCode || 500;
   const message = err.message || "An unexpected server error occurred.";
   
-  const errorResponse = {
+  return res.status(statusCode).json({
     success: false,
     message: message,
-  };
-  
-  res.status(statusCode).json(errorResponse);
+  });
 });
 
 
