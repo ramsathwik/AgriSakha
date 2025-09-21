@@ -3,14 +3,18 @@ import bcrypt from "bcrypt";
 
 const LocationSchema = new mongoose.Schema({
     _id: false,
-    fullAddress: String,
+    fullAddress: {
+        type : String,
+        required : true
+    },
     district: {
         type: String,
         enum: [
             "Alappuzha", "Ernakulam", "Idukki", "Kannur", "Kasaragod",
             "Kollam", "Kottayam", "Kozhikode", "Malappuram", "Palakkad",
             "Pathanamthitta", "Thiruvananthapuram", "Thrissur", "Wayanad"
-        ]
+        ],
+        required : true
     },
     location: {
         type: {

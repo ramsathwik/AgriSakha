@@ -1,19 +1,22 @@
-import { Router } from "express";
-import {
-    generateAndSendOtp,
-    verifyOtpAndLogin,
-    logoutUser
-} from "../controllers/auth.controller.js";
-import { verifyFarmerJWT } from "../middlewares/auth.middleware.js"; 
+import { Router } from 'express';
+import { 
+    signup, 
+    sendLoginOtp, 
+    verifyOtpAndLogin, 
+    logoutUser 
+} from '../controllers/auth.controller.js';
+import { verifyFarmerJWT } from '../middlewares/auth.middleware.js'; // Assuming you have this middleware
 
 const router = Router();
 
-// --- Public Routes ---
-router.route("/generate-otp").post(generateAndSendOtp);
-router.route("/verify-otp").post(verifyOtpAndLogin);
+router.route('/signup').post(signup);
 
-// --- Protected Route (Requires Authentication) ---
-router.route("/logout").post(verifyFarmerJWT, logoutUser);
+router.route('/send-login-otp').post(sendLoginOtp);
+
+router.route('/verify-otp').post(verifyOtpAndLogin);
+
+
+router.route('/logout').post(verifyFarmerJWT, logoutUser);
 
 
 export default router;
