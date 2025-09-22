@@ -2,6 +2,7 @@ import express from "express";
 import cors from 'cors';
 import cookieParser from "cookie-parser";
 import rateLimit from 'express-rate-limit'; 
+import mongoose from "mongoose";
 import DBconnection from "./src/config/db.js";
 import logger from "./src/utils/logger.js";
 import config from "./src/config/env.js"; 
@@ -59,7 +60,7 @@ if (config.features.tipsEnabled) {
 } 
 import expertAuthRouter from "./src/routes/expert.auth.routes.js";
 import tipRouter from "./src/routes/tip.routes.js";
-import likeRouter from "./src/routes/like.routes.js"; // New
+import likeRouter from "./src/routes/like.routes.js"; 
 
 app.use("/api/v1/experts/auth", authLimiter, expertAuthRouter);
 app.use("/api/v1/tips", generalApiLimiter, tipRouter);
@@ -79,21 +80,27 @@ app.use((err, req, res, next) => {
     });
   }
 
-  logger.error(err.message, { stack: err.stack, path: req.path });
+  if (config.debugLogs) {
+    logger.error(err.message, { stack: err.stack, path: req.path });
+  } else {
+    logger.error(err.message);
+  }
   
   const statusCode = err.statusCode || 500;
   const message = err.message || "An unexpected server error occurred.";
   
   return res.status(statusCode).json({
     success: false,
-    message: message,
+    message: "An unexpected server error occurred.",
   });
 });
 
 const PORT = config.port;
+let server;
+
 DBconnection()
 .then(() => {
-  app.listen(PORT, () => {
+  server = app.listen(PORT, () => {
     logger.info(`Server is running on port ${PORT}`);
   });
 })
@@ -101,3 +108,28 @@ DBconnection()
   logger.error("MongoDB connection error:", { error: error.message });
   process.exit(1);
 });
+
+// --- Graceful Shutdown Logic ---
+const gracefulShutdown = (signal) => {
+    logger.warn(`Received signal: ${signal}. Starting graceful shutdown.`);
+    if (server) {
+        server.close(() => {
+            logger.info("HTTP server closed.");
+            mongoose.connection.close(false, () => {
+                logger.info("MongoDB connection closed.");
+                process.exit(0);
+            });
+        });
+    } else {
+        logger.info("No active server to shut down.");
+        process.exit(0);
+    }
+
+    setTimeout(() => {
+        logger.error("Could not close connections in time, forcefully shutting down.");
+        process.exit(1);
+    }, 10000); // 10 seconds
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
