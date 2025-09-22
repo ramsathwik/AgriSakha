@@ -57,14 +57,14 @@ app.use("/api/v1/auth", authLimiter, authRouter);
 if (config.features.tipsEnabled) {
     logger.info("Feature 'TIPS' is ENABLED. Mounting related routes.");
 } 
-
 import expertAuthRouter from "./src/routes/expert.auth.routes.js";
 import tipRouter from "./src/routes/tip.routes.js";
+import likeRouter from "./src/routes/like.routes.js"; // New
 
-// Mount routers with appropriate limiters
 app.use("/api/v1/experts/auth", authLimiter, expertAuthRouter);
-app.use("/api/v1/tips", generalApiLimiter, tipRouter); 
-app.use("/api/v1/tags", generalApiLimiter, tipRouter); 
+app.use("/api/v1/tips", generalApiLimiter, tipRouter);
+app.use("/api/v1/tags", generalApiLimiter, tipRouter);
+app.use("/api/v1/likes", generalApiLimiter, likeRouter); 
 
 
 // --- Global Error Handler ---

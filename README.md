@@ -18,3 +18,15 @@
 ### Changed
 - **[Model]** Updated the `Tip` schema to support the approval workflow with `authorFarmer`, an optional `author` (approver), and `rejectionReason` fields.
 - **[Controller]** The `createTip` logic was split into `createTipByExpert` (for direct publishing) and `submitTipByFarmer` (for moderation).
+
+
+
+
+### Added
+- **[FEATURE]** Authenticated users (Farmers and Experts) can now like and unlike published tips.
+- **[API]** Added a `POST /likes/toggle/tip/:tipId` endpoint to manage likes.
+- **[Model]** Created a new, scalable `Like` model to handle polymorphic associations.
+- **[Middleware]** Added a flexible `verifyUserJWT` middleware to authenticate requests from either user role for shared actions.
+
+### Changed
+- **[DB]** The `Tip` model's `likesCount` is now updated atomically to ensure data consistency.
