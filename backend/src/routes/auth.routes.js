@@ -5,18 +5,22 @@ import {
     verifyOtpAndLogin, 
     logoutUser 
 } from '../controllers/auth.controller.js';
-import { verifyFarmerJWT } from '../middlewares/auth.middleware.js'; // Assuming you have this middleware
+import { verifyFarmerJWT } from '../middlewares/auth.middleware.js';
+import { 
+    farmerSignupValidator, 
+    sendLoginOtpValidator, 
+    verifyOtpValidator 
+} from '../validators/auth.validators.js';
+import { validate } from '../middlewares/validation.middleware.js';
 
 const router = Router();
 
-router.route('/signup').post(signup);
+router.route('/signup').post(farmerSignupValidator, validate, signup);
 
-router.route('/send-login-otp').post(sendLoginOtp);
+router.route('/send-login-otp').post(sendLoginOtpValidator, validate, sendLoginOtp);
 
-router.route('/verify-otp').post(verifyOtpAndLogin);
-
+router.route('/verify-otp').post(verifyOtpValidator, validate, verifyOtpAndLogin);
 
 router.route('/logout').post(verifyFarmerJWT, logoutUser);
-
 
 export default router;
