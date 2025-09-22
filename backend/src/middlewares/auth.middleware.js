@@ -1,43 +1,28 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-import { verifyJWT } from "../utils/JwtUtils.js";
+import { verifyJWT as verifyToken } from "../utils/JwtUtils.js";
 import Farmer from "../models/Farmer.js";
 import FarmingExpert from "../models/FarmingExpert.js";
 
-export const verifyFarmerJWT = asyncHandler(async (req, res, next) => {
+/**
+ * @description A flexible RBAC middleware to verify JWT and user roles.
+ * @param {string[]} requiredRoles - An array of roles that are allowed to access the route (e.g., ['farmer'], ['expert'], ['farmer', 'expert']).
+ * @returns {Function} Express middleware function.
+ */
+export const verifyJWT = (requiredRoles = []) => asyncHandler(async (req, res, next) => {
     const token = req.cookies?.accessToken || req.headers?.authorization?.split("Bearer ")[1];
 
     if (!token) {
         throw new ApiError(401, "Unauthorized request. No token provided.");
     }
 
-    const decodedToken = verifyJWT(token);
-    
-    if (!decodedToken || decodedToken.role !== 'farmer') {
-        throw new ApiError(401, "Invalid access token for this resource.");
-    }
-
-    const farmer = await Farmer.findById(decodedToken.userId).select("-phoneOtp -phoneOtpExpires");
-    if (!farmer) {
-        throw new ApiError(401, "Invalid access token. Farmer not found.");
-    }
-
-    req.farmer = farmer;
-    next();
-});
-
-// New flexible middleware to verify any authenticated user (Farmer or Expert)
-export const verifyUserJWT = asyncHandler(async (req, res, next) => {
-    const token = req.cookies?.accessToken || req.headers?.authorization?.split("Bearer ")[1];
-
-    if (!token) {
-        throw new ApiError(401, "Unauthorized request. No token provided.");
-    }
-
-    const decodedToken = verifyJWT(token);
-
+    const decodedToken = verifyToken(token);
     if (!decodedToken || !decodedToken.userId || !decodedToken.role) {
         throw new ApiError(401, "Invalid access token.");
+    }
+    
+    if (requiredRoles.length > 0 && !requiredRoles.includes(decodedToken.role)) {
+        throw new ApiError(403, "Forbidden. You do not have permission to access this resource.");
     }
 
     let user;
@@ -51,12 +36,18 @@ export const verifyUserJWT = asyncHandler(async (req, res, next) => {
         throw new ApiError(401, "User not found. Invalid access token.");
     }
     
-    // Attach a generic `user` object to the request for easy access in controllers
     req.user = {
         _id: user._id,
         role: decodedToken.role,
         details: user,
     };
+    
+    // For convenience, also attach role-specific objects
+    if (decodedToken.role === 'farmer') {
+        req.farmer = user;
+    } else if (decodedToken.role === 'expert') {
+        req.expert = user;
+    }
     
     next();
 });

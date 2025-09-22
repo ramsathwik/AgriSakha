@@ -1,10 +1,16 @@
 import { Router } from 'express';
 import { toggleTipLike } from '../controllers/like.controller.js';
-import { verifyUserJWT } from '../middlewares/auth.middleware.js';
+import { verifyJWT } from '../middlewares/auth.middleware.js';
+import { mongoIdValidator } from '../validators/common.validators.js';
+import { validate } from '../middlewares/validation.middleware.js';
 
 const router = Router();
 
-// This route can be accessed by any authenticated user (Farmer or Expert)
-router.route('/toggle/tip/:tipId').post(verifyUserJWT, toggleTipLike);
+router.route('/toggle/tip/:tipId').post(
+    mongoIdValidator('tipId'), 
+    validate,
+    verifyJWT(['farmer', 'expert']), 
+    toggleTipLike
+);
 
 export default router;

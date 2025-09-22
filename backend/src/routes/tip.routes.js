@@ -1,6 +1,5 @@
 import { Router } from 'express';
-import { verifyExpertJWT } from '../middlewares/expert.auth.middleware.js';
-import { verifyFarmerJWT } from '../middlewares/auth.middleware.js';
+import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { upload } from '../middlewares/multer.middleware.js';
 import { 
     createTipByExpert,
@@ -29,7 +28,7 @@ router.route('/tag/:tagId').get(mongoIdValidator('tagId'), validate, getTipsByTa
 // --- FARMER ROUTES ---
 router.route('/submit')
     .post(
-        verifyFarmerJWT,
+        verifyJWT(['farmer']),
         upload.single('image'),
         tipCreateValidator,
         validate,
@@ -39,15 +38,15 @@ router.route('/submit')
 // --- EXPERT ROUTES ---
 router.route('/')
     .post(
-        verifyExpertJWT, 
+        verifyJWT(['expert']), 
         upload.single('image'), 
         tipCreateValidator,
         validate,
         createTipByExpert
     );
 
-router.route('/pending').get(verifyExpertJWT, getPendingTips);
-router.route('/:tipId/approve').patch(mongoIdValidator('tipId'), validate, verifyExpertJWT, approveTip);
-router.route('/:tipId/reject').patch(mongoIdValidator('tipId'), rejectTipValidator, validate, verifyExpertJWT, rejectTip);
+router.route('/pending').get(verifyJWT(['expert']), getPendingTips);
+router.route('/:tipId/approve').patch(mongoIdValidator('tipId'), validate, verifyJWT(['expert']), approveTip);
+router.route('/:tipId/reject').patch(mongoIdValidator('tipId'), rejectTipValidator, validate, verifyJWT(['expert']), rejectTip);
 
 export default router;
