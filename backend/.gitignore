@@ -41,6 +41,9 @@ build/
 *.swp
 *.swo
 
+# Temporary files
+public/temp
+
 # Optional npm cache directory
 .npm
 

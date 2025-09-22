@@ -15,7 +15,10 @@ const requiredEnvVars = [
   'TWILIO_AUTH_TOKEN',
   'TWILIO_PHONE_NUMBER',
   'SMS_COUNTRY_CODE',
-  'EXPERT_REGISTRATION_SECRET_KEY', // New variable
+  'EXPERT_REGISTRATION_SECRET_KEY',
+  'CLOUDINARY_CLOUD_NAME', 
+  'CLOUDINARY_API_KEY',    
+  'CLOUDINARY_API_SECRET', 
 ];
 
 
@@ -54,6 +57,11 @@ const config = {
     tipsEnabled: process.env.FEATURE_TIPS_ENABLED === 'true',
   },
   expertSecret: process.env.EXPERT_REGISTRATION_SECRET_KEY,
+  cloudinary: { 
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    apiKey: process.env.CLOUDINARY_API_KEY,
+    apiSecret: process.env.CLOUDINARY_API_SECRET,
+  }
 };
 
 export default Object.freeze(config);

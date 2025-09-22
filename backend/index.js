@@ -19,11 +19,12 @@ app.use(cors({
   origin: config.corsOrigin, 
   credentials: true 
 }));
+app.use(express.static("public")); // Serve static files
 
 // Rate Limiters
 const authLimiter = rateLimit({
-	windowMs: 15 * 60 * 1000, // 15 minutes
-	max: 20, // Limit each IP to 20 requests per window
+	windowMs: 15 * 60 * 1000,
+	max: 20,
 	standardHeaders: true,
 	legacyHeaders: false,
     message: 'Too many authentication requests from this IP, please try again after 15 minutes.',
@@ -33,8 +34,8 @@ const authLimiter = rateLimit({
 });
 
 const generalApiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per window
+    windowMs: 15 * 60 * 1000,
+    max: 100,
     standardHeaders: true,
     legacyHeaders: false,
     message: 'Too many requests from this IP, please try again after 15 minutes.',
@@ -54,23 +55,17 @@ app.use("/api/v1/auth", authLimiter, authRouter);
 
 // --- Conditionally Loaded Feature Routes ---
 if (config.features.tipsEnabled) {
-    // Import routers for the "Tips" feature
     logger.info("Feature 'TIPS' is ENABLED. Mounting related routes.");
-}
-    // Expert auth routes
-const expertAuthLimiter = rateLimit({ // Using a separate limiter for experts
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: 'Too many authentication requests from this IP, please try again after 15 minutes.',
-  handler: (req, res, next, options) => {
-      throw new ApiError(options.statusCode, options.message);
-  }
-});
-    
+} 
+
 import expertAuthRouter from "./src/routes/expert.auth.routes.js";
-app.use("/api/v1/experts/auth", expertAuthLimiter, expertAuthRouter);
+import tipRouter from "./src/routes/tip.routes.js";
+
+// Mount routers with appropriate limiters
+app.use("/api/v1/experts/auth", authLimiter, expertAuthRouter);
+app.use("/api/v1/tips", generalApiLimiter, tipRouter); 
+app.use("/api/v1/tags", generalApiLimiter, tipRouter); 
+
 
 // --- Global Error Handler ---
 app.use((err, req, res, next) => {
@@ -84,7 +79,6 @@ app.use((err, req, res, next) => {
     });
   }
 
-  // Handle unexpected errors
   logger.error(err.message, { stack: err.stack, path: req.path });
   
   const statusCode = err.statusCode || 500;
@@ -95,7 +89,6 @@ app.use((err, req, res, next) => {
     message: message,
   });
 });
-
 
 const PORT = config.port;
 DBconnection()
