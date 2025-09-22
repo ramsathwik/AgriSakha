@@ -23,11 +23,13 @@ const uploadOnCloudinary = async (localFilePath) => {
 
     logger.info(`File uploaded successfully to Cloudinary: ${response.url}`);
     
+    // Clean up the locally saved temporary file
     fs.unlinkSync(localFilePath);
     
     return response;
 
   } catch (error) {
+    // Clean up the locally saved temporary file if the upload operation failed
     if (fs.existsSync(localFilePath)) {
       fs.unlinkSync(localFilePath);
     }
@@ -36,4 +38,34 @@ const uploadOnCloudinary = async (localFilePath) => {
   }
 };
 
-export { uploadOnCloudinary };
+const deleteFromCloudinary = async (publicId) => {
+    if (!publicId) {
+        logger.warn("Cloudinary delete skipped: No public ID provided.");
+        return null;
+    }
+    try {
+        // We only need to specify the public_id to delete an asset.
+        // For videos, we might need to set resource_type: 'video'. For this app, 'image' is sufficient.
+        const result = await cloudinary.uploader.destroy(publicId, {
+            resource_type: 'image' // Be specific to avoid accidental deletion of other asset types.
+        });
+        
+        if (result.result === 'ok') {
+            logger.info(`Asset deleted successfully from Cloudinary: ${publicId}`);
+        } else {
+            // This case handles when Cloudinary returns a non-error response but didn't find the file.
+            logger.warn(`Cloudinary asset not found or could not be deleted: ${publicId}`, { result });
+        }
+
+        return result;
+
+    } catch (error) {
+        logger.error("Cloudinary delete failed", { error: error.message, publicId });
+        // We don't throw an error here to prevent the main application flow from breaking
+        // if only the asset deletion fails. This should be monitored.
+        return null;
+    }
+};
+
+
+export { uploadOnCloudinary, deleteFromCloudinary };

@@ -9,12 +9,16 @@ import {
     rejectTip,
     getAllTips, 
     getAllTags, 
-    getTipsByTag 
+    getTipsByTag,
+    updateTip,
+    deleteTip,
+    getMyTips
 } from '../controllers/tip.controller.js';
 import { validate } from '../middlewares/validation.middleware.js';
 import { mongoIdValidator } from '../validators/common.validators.js';
 import { 
-    tipCreateValidator, 
+    tipCreateValidator,
+    tipUpdateValidator, 
     rejectTipValidator 
 } from '../validators/tip.validators.js';
 
@@ -25,7 +29,26 @@ router.route('/').get(getAllTips);
 router.route('/tags').get(getAllTags);
 router.route('/tag/:tagId').get(mongoIdValidator('tagId'), validate, getTipsByTag);
 
-// --- FARMER ROUTES ---
+// --- AUTHENTICATED USER ROUTES (FARMER & EXPERT) ---
+router.route('/my-tips').get(verifyJWT(['farmer', 'expert']), getMyTips);
+
+router.route('/:tipId')
+    .patch(
+        verifyJWT(['farmer', 'expert']),
+        upload.single('image'),
+        mongoIdValidator('tipId'),
+        tipUpdateValidator,
+        validate,
+        updateTip
+    )
+    .delete(
+        verifyJWT(['farmer', 'expert']),
+        mongoIdValidator('tipId'),
+        validate,
+        deleteTip
+    );
+
+// --- FARMER-SPECIFIC ROUTES ---
 router.route('/submit')
     .post(
         verifyJWT(['farmer']),
@@ -35,7 +58,7 @@ router.route('/submit')
         submitTipByFarmer
     );
 
-// --- EXPERT ROUTES ---
+// --- EXPERT-SPECIFIC ROUTES ---
 router.route('/')
     .post(
         verifyJWT(['expert']), 

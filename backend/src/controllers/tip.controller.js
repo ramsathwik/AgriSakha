@@ -1,12 +1,17 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 import Tip from "../models/Tip.js";
 import Tag from "../models/Tag.js";
+import Like from "../models/Like.js";
 import { auditLog } from "../utils/auditLogger.js";
+import mongoose from "mongoose";
 
 const getOrCreateTags = async (tagNames) => {
+    if (!tagNames || tagNames.length === 0) {
+        return [];
+    }
     const tagPromises = tagNames.map(name =>
         Tag.findOneAndUpdate(
             { name: name.trim().toLowerCase() },
@@ -18,6 +23,7 @@ const getOrCreateTags = async (tagNames) => {
     return settledTags.map(tag => tag._id);
 };
 
+// CREATE
 export const createTipByExpert = asyncHandler(async (req, res) => {
     const { title, content, tags } = req.body;
     
@@ -90,7 +96,138 @@ export const submitTipByFarmer = asyncHandler(async (req, res) => {
     );
 });
 
+// READ
+export const getAllTips = asyncHandler(async (req, res) => {
+    const tips = await Tip.find({ status: 'published' })
+        .sort({ createdAt: -1 })
+        .populate('author', 'fullName email')
+        .populate('authorFarmer', 'fullName')
+        .populate('tags', 'name');
 
+    return res.status(200).json(
+        new ApiResponse(200, tips, "Tips retrieved successfully.")
+    );
+});
+
+export const getMyTips = asyncHandler(async (req, res) => {
+    const userId = req.user._id;
+    const userRole = req.user.role;
+    
+    const query = userRole === 'expert'
+        ? { author: userId }
+        : { authorFarmer: userId };
+
+    const myTips = await Tip.find(query)
+        .sort({ createdAt: -1 })
+        .populate('author', 'fullName')
+        .populate('authorFarmer', 'fullName')
+        .populate('tags', 'name');
+    
+    return res.status(200).json(new ApiResponse(200, myTips, "Your tips retrieved successfully."));
+});
+
+// UPDATE
+export const updateTip = asyncHandler(async (req, res) => {
+    const { tipId } = req.params;
+    const { title, content, tags } = req.body;
+    const userId = req.user._id;
+
+    const tip = await Tip.findById(tipId);
+    if (!tip) {
+        throw new ApiError(404, "Tip not found.");
+    }
+    
+    // Authorization: Check if the current user is the author
+    const isAuthor = (tip.author && tip.author.equals(userId)) || (tip.authorFarmer && tip.authorFarmer.equals(userId));
+    if (!isAuthor) {
+        throw new ApiError(403, "You are not authorized to update this tip.");
+    }
+
+    if (title) tip.title = title;
+    if (content) tip.content = content;
+
+    if (tags) {
+        const tagNames = tags.split(',').map(tag => tag.trim()).filter(Boolean);
+        tip.tags = await getOrCreateTags(tagNames);
+    }
+    
+    // Image handling: if a new image is provided, replace the old one
+    if (req.file) {
+        const imageLocalPath = req.file.path;
+        const newImageAsset = await uploadOnCloudinary(imageLocalPath);
+        if (!newImageAsset) {
+            throw new ApiError(500, "Failed to upload new image.");
+        }
+        
+        // If there was an old image, delete it from Cloudinary
+        if (tip.image && tip.image.public_id) {
+            await deleteFromCloudinary(tip.image.public_id);
+        }
+
+        tip.image = { url: newImageAsset.secure_url, public_id: newImageAsset.public_id };
+    }
+
+    await tip.save({ validateBeforeSave: true });
+
+    const updatedTip = await Tip.findById(tip._id)
+        .populate('author', 'fullName')
+        .populate('authorFarmer', 'fullName')
+        .populate('tags', 'name');
+
+    auditLog({
+        action: 'TIP_UPDATED',
+        actor: { id: req.user._id.toString(), role: req.user.role },
+        target: { id: tip._id.toString(), type: 'Tip' },
+    });
+
+    return res.status(200).json(new ApiResponse(200, updatedTip, "Tip updated successfully."));
+});
+
+// DELETE
+export const deleteTip = asyncHandler(async (req, res) => {
+    const { tipId } = req.params;
+    const userId = req.user._id;
+    
+    const tip = await Tip.findById(tipId);
+    if (!tip) {
+        throw new ApiError(404, "Tip not found.");
+    }
+    
+    // Authorization: Check if the current user is the author
+    const isAuthor = (tip.author && tip.author.equals(userId)) || (tip.authorFarmer && tip.authorFarmer.equals(userId));
+    if (!isAuthor) {
+        throw new ApiError(403, "You are not authorized to delete this tip.");
+    }
+    
+    // Start a session for transaction-like behavior
+    const session = await mongoose.startSession();
+    try {
+        await session.withTransaction(async () => {
+            // 1. Delete the tip document
+            await Tip.findByIdAndDelete(tip._id, { session });
+            // 2. Delete all likes associated with the tip
+            await Like.deleteMany({ tip: tip._id }, { session });
+        });
+    } finally {
+        session.endSession();
+    }
+    
+    // 3. After DB operations are successful, delete the image from Cloudinary
+    if (tip.image && tip.image.public_id) {
+        await deleteFromCloudinary(tip.image.public_id);
+    }
+    
+    auditLog({
+        action: 'TIP_DELETED',
+        actor: { id: req.user._id.toString(), role: req.user.role },
+        target: { id: tip._id.toString(), type: 'Tip' },
+    });
+
+    return res.status(200).json(new ApiResponse(200, {}, "Tip deleted successfully."));
+});
+
+
+// --- ADMIN/EXPERT ACTIONS ---
 export const getPendingTips = asyncHandler(async (req, res) => {
     const pendingTips = await Tip.find({ status: 'pending' })
         .sort({ createdAt: 'asc' })
@@ -157,17 +294,6 @@ export const rejectTip = asyncHandler(async (req, res) => {
     );
 });
 
-export const getAllTips = asyncHandler(async (req, res) => {
-    const tips = await Tip.find({ status: 'published' })
-        .sort({ createdAt: -1 })
-        .populate('author', 'fullName email')
-        .populate('authorFarmer', 'fullName')
-        .populate('tags', 'name');
-
-    return res.status(200).json(
-        new ApiResponse(200, tips, "Tips retrieved successfully.")
-    );
-});
 
 export const getAllTags = asyncHandler(async (req, res) => {
     const tags = await Tag.find({}).sort({ name: 1 });
