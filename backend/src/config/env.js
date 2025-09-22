@@ -37,6 +37,7 @@ const config = {
   port: process.env.PORT,
   corsOrigin: process.env.CORS_ORIGIN,
   mongodbUri: process.env.MONGODB_URI,
+  debugLogs: process.env.DEBUG_LOGS === 'true',
   jwt: {
     secret: process.env.JWT_SECRET,
     expiry: process.env.JWT_EXPIRY,

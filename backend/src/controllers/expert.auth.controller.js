@@ -5,17 +5,10 @@ import FarmingExpert from "../models/FarmingExpert.js";
 import { generateJWT } from "../utils/JwtUtils.js";
 import { cookieOptions } from "../constants.js";
 import config from "../config/env.js";
+import { auditLog } from "../utils/auditLogger.js";
 
-/**
- * @description Registers a new farming expert using a secret key.
- * @route POST /api/v1/experts/auth/register
- */
 export const registerExpert = asyncHandler(async (req, res) => {
     const { fullName, email, password, secretKey } = req.body;
-
-    if (!fullName || !email || !password || !secretKey) {
-        throw new ApiError(400, "Full name, email, password, and secret key are required.");
-    }
 
     if (secretKey !== config.expertSecret) {
         throw new ApiError(403, "Invalid secret key. You are not authorized to register as an expert.");
@@ -31,9 +24,6 @@ export const registerExpert = asyncHandler(async (req, res) => {
         email,
         password,
     });
-
-    // We do not log the user in automatically upon registration for security reasons.
-    // They must explicitly log in after registering.
     
     const createdExpert = await FarmingExpert.findById(expert._id).select("-password");
 
@@ -44,16 +34,8 @@ export const registerExpert = asyncHandler(async (req, res) => {
     ));
 });
 
-/**
- * @description Logs in a farming expert.
- * @route POST /api/v1/experts/auth/login
- */
 export const loginExpert = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
-
-    if (!email || !password) {
-        throw new ApiError(400, "Email and password are required.");
-    }
 
     const expert = await FarmingExpert.findOne({ email });
     if (!expert) {
@@ -66,6 +48,13 @@ export const loginExpert = asyncHandler(async (req, res) => {
     }
 
     const token = generateJWT(expert, 'expert');
+
+    // Audit Log for successful login
+    auditLog({
+        action: 'EXPERT_LOGIN_SUCCESS',
+        actor: { id: expert._id.toString(), role: 'expert' },
+    });
+    
     const loggedInExpert = await FarmingExpert.findById(expert._id).select("-password");
 
     return res
@@ -78,10 +67,6 @@ export const loginExpert = asyncHandler(async (req, res) => {
         ));
 });
 
-/**
- * @description Logs out a farming expert.
- * @route POST /api/v1/experts/auth/logout
- */
 export const logoutExpert = asyncHandler(async (req, res) => {
     return res
         .status(200)
@@ -89,10 +74,6 @@ export const logoutExpert = asyncHandler(async (req, res) => {
         .json(new ApiResponse(200, {}, "Expert logged out successfully."));
 });
 
-/**
- * @description Get current logged in expert's profile.
- * @route GET /api/v1/experts/auth/me
- */
 export const getMyProfile = asyncHandler(async (req, res) => {
     return res
         .status(200)
