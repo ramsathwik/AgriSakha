@@ -52,19 +52,24 @@ app.get('/health', generalApiLimiter, (req, res) => {
 
 // --- Routes ---
 import authRouter from "./src/routes/auth.routes.js";
+import farmerRouter from "./src/routes/farmer.routes.js";
+import expertAuthRouter from "./src/routes/expert.auth.routes.js";
+import expertRouter from "./src/routes/expert.routes.js";
+
 app.use("/api/v1/auth", authLimiter, authRouter);
+app.use("/api/v1/farmers", generalApiLimiter, farmerRouter);
+app.use("/api/v1/experts/auth", authLimiter, expertAuthRouter);
+app.use("/api/v1/experts", generalApiLimiter, expertRouter);
 
 // --- Conditionally Loaded Feature Routes ---
 if (config.features.tipsEnabled) {
     logger.info("Feature 'TIPS' is ENABLED. Mounting related routes.");
 } 
-import expertAuthRouter from "./src/routes/expert.auth.routes.js";
 import tipRouter from "./src/routes/tip.routes.js";
 import likeRouter from "./src/routes/like.routes.js"; 
 
-app.use("/api/v1/experts/auth", authLimiter, expertAuthRouter);
 app.use("/api/v1/tips", generalApiLimiter, tipRouter);
-app.use("/api/v1/tags", generalApiLimiter, tipRouter);
+app.use("/api/v1/tags", generalApiLimiter, tipRouter); // Note: /tags is part of tipRouter
 app.use("/api/v1/likes", generalApiLimiter, likeRouter); 
 
 
@@ -87,7 +92,6 @@ app.use((err, req, res, next) => {
   }
   
   const statusCode = err.statusCode || 500;
-  const message = err.message || "An unexpected server error occurred.";
   
   return res.status(statusCode).json({
     success: false,

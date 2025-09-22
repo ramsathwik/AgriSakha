@@ -73,9 +73,3 @@ export const logoutExpert = asyncHandler(async (req, res) => {
         .clearCookie("accessToken", cookieOptions)
         .json(new ApiResponse(200, {}, "Expert logged out successfully."));
 });
-
-export const getMyProfile = asyncHandler(async (req, res) => {
-    return res
-        .status(200)
-        .json(new ApiResponse(200, { expert: req.expert }, "Expert profile fetched successfully."));
-});

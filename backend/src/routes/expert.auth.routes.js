@@ -2,8 +2,7 @@ import { Router } from 'express';
 import {
     registerExpert,
     loginExpert,
-    logoutExpert,
-    getMyProfile
+    logoutExpert
 } from '../controllers/expert.auth.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { 
@@ -16,8 +15,6 @@ const router = Router();
 
 router.route('/register').post(expertRegisterValidator, validate, registerExpert);
 router.route('/login').post(expertLoginValidator, validate, loginExpert);
-
 router.route('/logout').post(verifyJWT(['expert']), logoutExpert);
-router.route('/me').get(verifyJWT(['expert']), getMyProfile);
 
 export default router;

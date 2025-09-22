@@ -39,7 +39,7 @@ const FarmerSchema = new mongoose.Schema({
     },
     dateOfBirth: Date,
     gender: { type: String, enum: ['male', 'female', 'other'] },
-    address: [LocationSchema],
+    address: LocationSchema,
     
     phoneOtp: {
         type: String,
