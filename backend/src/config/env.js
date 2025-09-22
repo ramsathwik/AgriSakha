@@ -15,6 +15,10 @@ const requiredEnvVars = [
   'TWILIO_AUTH_TOKEN',
   'TWILIO_PHONE_NUMBER',
   'SMS_COUNTRY_CODE',
+  'EXPERT_REGISTRATION_SECRET_KEY',
+  'CLOUDINARY_CLOUD_NAME', 
+  'CLOUDINARY_API_KEY',    
+  'CLOUDINARY_API_SECRET', 
 ];
 
 
@@ -33,6 +37,7 @@ const config = {
   port: process.env.PORT,
   corsOrigin: process.env.CORS_ORIGIN,
   mongodbUri: process.env.MONGODB_URI,
+  debugLogs: process.env.DEBUG_LOGS === 'true',
   jwt: {
     secret: process.env.JWT_SECRET,
     expiry: process.env.JWT_EXPIRY,
@@ -48,6 +53,15 @@ const config = {
   },
   sms: {
     countryCode: process.env.SMS_COUNTRY_CODE,
+  },
+  features: {
+    tipsEnabled: process.env.FEATURE_TIPS_ENABLED === 'true',
+  },
+  expertSecret: process.env.EXPERT_REGISTRATION_SECRET_KEY,
+  cloudinary: { 
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    apiKey: process.env.CLOUDINARY_API_KEY,
+    apiSecret: process.env.CLOUDINARY_API_SECRET,
   }
 };
 

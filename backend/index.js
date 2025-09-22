@@ -2,6 +2,7 @@ import express from "express";
 import cors from 'cors';
 import cookieParser from "cookie-parser";
 import rateLimit from 'express-rate-limit'; 
+import mongoose from "mongoose";
 import DBconnection from "./src/config/db.js";
 import logger from "./src/utils/logger.js";
 import config from "./src/config/env.js"; 
@@ -19,11 +20,12 @@ app.use(cors({
   origin: config.corsOrigin, 
   credentials: true 
 }));
+app.use(express.static("public")); // Serve static files
 
 // Rate Limiters
 const authLimiter = rateLimit({
-	windowMs: 15 * 60 * 1000, // 15 minutes
-	max: 20, // Limit each IP to 20 requests per window
+	windowMs: 15 * 60 * 1000,
+	max: 20,
 	standardHeaders: true,
 	legacyHeaders: false,
     message: 'Too many authentication requests from this IP, please try again after 15 minutes.',
@@ -33,8 +35,8 @@ const authLimiter = rateLimit({
 });
 
 const generalApiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per window
+    windowMs: 15 * 60 * 1000,
+    max: 100,
     standardHeaders: true,
     legacyHeaders: false,
     message: 'Too many requests from this IP, please try again after 15 minutes.',
@@ -50,9 +52,25 @@ app.get('/health', generalApiLimiter, (req, res) => {
 
 // --- Routes ---
 import authRouter from "./src/routes/auth.routes.js";
+import farmerRouter from "./src/routes/farmer.routes.js";
+import expertAuthRouter from "./src/routes/expert.auth.routes.js";
+import expertRouter from "./src/routes/expert.routes.js";
 
-// Mount the authentication router with its specific rate limiter
 app.use("/api/v1/auth", authLimiter, authRouter);
+app.use("/api/v1/farmers", generalApiLimiter, farmerRouter);
+app.use("/api/v1/experts/auth", authLimiter, expertAuthRouter);
+app.use("/api/v1/experts", generalApiLimiter, expertRouter);
+
+// --- Conditionally Loaded Feature Routes ---
+if (config.features.tipsEnabled) {
+    logger.info("Feature 'TIPS' is ENABLED. Mounting related routes.");
+} 
+import tipRouter from "./src/routes/tip.routes.js";
+import likeRouter from "./src/routes/like.routes.js"; 
+
+app.use("/api/v1/tips", generalApiLimiter, tipRouter);
+app.use("/api/v1/tags", generalApiLimiter, tipRouter); // Note: /tags is part of tipRouter
+app.use("/api/v1/likes", generalApiLimiter, likeRouter); 
 
 
 // --- Global Error Handler ---
@@ -67,23 +85,26 @@ app.use((err, req, res, next) => {
     });
   }
 
-  // Handle unexpected errors
-  logger.error(err.message, { stack: err.stack, path: req.path });
+  if (config.debugLogs) {
+    logger.error(err.message, { stack: err.stack, path: req.path });
+  } else {
+    logger.error(err.message);
+  }
   
   const statusCode = err.statusCode || 500;
-  const message = err.message || "An unexpected server error occurred.";
   
   return res.status(statusCode).json({
     success: false,
-    message: message,
+    message: "An unexpected server error occurred.",
   });
 });
 
-
 const PORT = config.port;
+let server;
+
 DBconnection()
 .then(() => {
-  app.listen(PORT, () => {
+  server = app.listen(PORT, () => {
     logger.info(`Server is running on port ${PORT}`);
   });
 })
@@ -91,3 +112,28 @@ DBconnection()
   logger.error("MongoDB connection error:", { error: error.message });
   process.exit(1);
 });
+
+// --- Graceful Shutdown Logic ---
+const gracefulShutdown = (signal) => {
+    logger.warn(`Received signal: ${signal}. Starting graceful shutdown.`);
+    if (server) {
+        server.close(() => {
+            logger.info("HTTP server closed.");
+            mongoose.connection.close(false, () => {
+                logger.info("MongoDB connection closed.");
+                process.exit(0);
+            });
+        });
+    } else {
+        logger.info("No active server to shut down.");
+        process.exit(0);
+    }
+
+    setTimeout(() => {
+        logger.error("Could not close connections in time, forcefully shutting down.");
+        process.exit(1);
+    }, 10000); // 10 seconds
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
