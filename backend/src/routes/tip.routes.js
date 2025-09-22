@@ -1,8 +1,13 @@
 import { Router } from 'express';
 import { verifyExpertJWT } from '../middlewares/expert.auth.middleware.js';
+import { verifyFarmerJWT } from '../middlewares/auth.middleware.js';
 import { upload } from '../middlewares/multer.middleware.js';
 import { 
-    createTip, 
+    createTipByExpert,
+    submitTipByFarmer,
+    getPendingTips,
+    approveTip,
+    rejectTip,
     getAllTips, 
     getAllTags, 
     getTipsByTag 
@@ -10,17 +15,29 @@ import {
 
 const router = Router();
 
-// Public routes
+// --- PUBLIC ROUTES ---
 router.route('/').get(getAllTips);
 router.route('/tags').get(getAllTags);
 router.route('/tag/:tagId').get(getTipsByTag);
 
-// Secured routes (for Experts only)
+// --- FARMER ROUTES ---
+router.route('/submit')
+    .post(
+        verifyFarmerJWT,
+        upload.single('image'),
+        submitTipByFarmer
+    );
+
+// --- EXPERT ROUTES ---
 router.route('/')
     .post(
         verifyExpertJWT, 
         upload.single('image'), 
-        createTip
+        createTipByExpert
     );
+
+router.route('/pending').get(verifyExpertJWT, getPendingTips);
+router.route('/:tipId/approve').patch(verifyExpertJWT, approveTip);
+router.route('/:tipId/reject').patch(verifyExpertJWT, rejectTip);
 
 export default router;

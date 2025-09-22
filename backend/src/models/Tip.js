@@ -14,7 +14,10 @@ const tipSchema = new mongoose.Schema({
     author: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'FarmingExpert',
-        required: true,
+    },
+    authorFarmer: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Farmer',
     },
     image: {
         url: { type: String },
@@ -27,14 +30,28 @@ const tipSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: ['published', 'pending', 'rejected'],
-        default: 'published',
+        default: 'pending', // Default is now pending
         index: true,
+    },
+    rejectionReason: {
+        type: String,
+        trim: true,
     },
     likesCount: {
         type: Number,
         default: 0,
     }
 }, { timestamps: true });
+
+// Ensure that a tip has an author, either an expert or a farmer
+tipSchema.pre('validate', function(next) {
+    if (!this.author && !this.authorFarmer) {
+        next(new Error('A tip must have an author, either a FarmingExpert or a Farmer.'));
+    } else {
+        next();
+    }
+});
+
 
 const Tip = mongoose.model("Tip", tipSchema);
 export default Tip;
