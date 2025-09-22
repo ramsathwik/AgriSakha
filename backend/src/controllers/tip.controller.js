@@ -63,7 +63,7 @@ export const createTipByExpert = asyncHandler(async (req, res) => {
 
 export const submitTipByFarmer = asyncHandler(async (req, res) => {
     const { title, content, tags } = req.body;
-    const farmerDistrict = req.farmer.address.district; // Get district from authenticated farmer
+    const farmerDistrict = req.farmer.address.district;
     
     const imageLocalPath = req.file?.path;
     let imageAsset;
@@ -82,7 +82,7 @@ export const submitTipByFarmer = asyncHandler(async (req, res) => {
         content,
         tags: tagIds,
         authorFarmer: req.farmer._id,
-        authorDistrict: farmerDistrict, // Save the district
+        authorDistrict: farmerDistrict,
         image: imageAsset ? { url: imageAsset.secure_url, public_id: imageAsset.public_id } : undefined,
         status: 'pending',
     });
@@ -114,7 +114,7 @@ export const getAllTips = asyncHandler(async (req, res) => {
 export const getPopularTips = asyncHandler(async (req, res) => {
     const popularTips = await Tip.find({ status: 'published' })
         .sort({ likesCount: -1 })
-        .limit(10) // Limit to top 10 popular tips
+        .limit(10)
         .populate('author', 'fullName email')
         .populate('authorFarmer', 'fullName')
         .populate('tags', 'name');
@@ -130,7 +130,7 @@ export const getTipsByDistrictForFarmer = asyncHandler(async (req, res) => {
     const tipsInDistrict = await Tip.find({
         status: 'published',
         authorDistrict: farmer.address.district,
-        authorFarmer: { $ne: farmer._id } // Exclude tips from the farmer making the request
+        authorFarmer: { $ne: farmer._id }
     })
     .sort({ createdAt: -1 })
     .populate('authorFarmer', 'fullName')
@@ -326,6 +326,45 @@ export const getAllTags = asyncHandler(async (req, res) => {
         new ApiResponse(200, tags, "Tags retrieved successfully.")
     );
 });
+
+export const getTrendingTags = asyncHandler(async (req, res) => {
+    const trendingTags = await Tip.aggregate([
+        // Stage 1: Filter for published tips
+        { $match: { status: 'published' } },
+        // Stage 2: Deconstruct the tags array
+        { $unwind: '$tags' },
+        // Stage 3: Group by tag and count occurrences
+        { $group: { _id: '$tags', count: { $sum: 1 } } },
+        // Stage 4: Sort by count in descending order
+        { $sort: { count: -1 } },
+        // Stage 5: Limit to the top 10 results
+        { $limit: 10 },
+        // Stage 6: Join with the tags collection to get tag names
+        {
+            $lookup: {
+                from: 'tags',
+                localField: '_id',
+                foreignField: '_id',
+                as: 'tagDetails'
+            }
+        },
+        // Stage 7: Deconstruct the resulting array from the lookup
+        { $unwind: '$tagDetails' },
+        // Stage 8: Project the final desired fields
+        {
+            $project: {
+                _id: '$_id',
+                name: '$tagDetails.name',
+                count: '$count'
+            }
+        }
+    ]);
+
+    return res.status(200).json(
+        new ApiResponse(200, trendingTags, "Trending tags retrieved successfully.")
+    );
+});
+
 
 export const getTipsByTag = asyncHandler(async (req, res) => {
     const { tagId } = req.params;

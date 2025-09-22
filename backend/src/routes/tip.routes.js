@@ -8,7 +8,8 @@ import {
     approveTip,
     rejectTip,
     getAllTips, 
-    getAllTags, 
+    getAllTags,
+    getTrendingTags,
     getTipsByTag,
     updateTip,
     deleteTip,
@@ -28,8 +29,9 @@ const router = Router();
 
 // --- PUBLIC ROUTES ---
 router.route('/').get(getAllTips);
-router.route('/popular').get(getPopularTips); // New route for popular tips
+router.route('/popular').get(getPopularTips);
 router.route('/tags').get(getAllTags);
+router.route('/tags/trending').get(getTrendingTags); // New route for trending tags
 router.route('/tag/:tagId').get(mongoIdValidator('tagId'), validate, getTipsByTag);
 
 // --- AUTHENTICATED USER ROUTES (FARMER & EXPERT) ---
@@ -61,7 +63,6 @@ router.route('/submit')
         submitTipByFarmer
     );
 
-// New route for farmers to get tips from their district
 router.route('/by-district').get(verifyJWT(['farmer']), getTipsByDistrictForFarmer);
 
 // --- EXPERT-SPECIFIC ROUTES ---
