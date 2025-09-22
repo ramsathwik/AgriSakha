@@ -10,6 +10,10 @@ import Notifications from "../pages/Notifications.jsx";
 import ProtectedRoute from "../components/Protected.jsx";
 import Signup from "../components/signup.jsx";
 import Login from "../components/login.jsx";
+import SeasonalTips from "../pages/Tips/Seasonaltips.jsx";
+import ProtectionTips from "../pages/Tips/Protectiontips.jsx";
+import CropcareTips from "../pages/Tips/Cropcaretips.jsx";
+import HarvestTips from "../pages/Tips/HarvestTips.jsx";
 import { Navigate } from "react-router-dom";
 const router = createBrowserRouter([
   {
@@ -47,6 +51,28 @@ const router = createBrowserRouter([
           {
             path: "/tips",
             element: <Tips />,
+            children: [
+              {
+                index: true,
+                element: <Navigate to="seasonal" replace />,
+              },
+              {
+                path: "seasonal",
+                element: <SeasonalTips />,
+              },
+              {
+                path: "cropcare",
+                element: <CropcareTips />,
+              },
+              {
+                path: "protection",
+                element: <ProtectionTips />,
+              },
+              {
+                path: "harvest",
+                element: <HarvestTips />,
+              },
+            ],
           },
           {
             path: "/profile",

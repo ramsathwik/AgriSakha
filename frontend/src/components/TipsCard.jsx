@@ -1,0 +1,46 @@
+import { IoChatbox, FaBookmark } from "../components/icons";
+
+function MonsoonCard() {
+  return (
+    <div className="bg-white rounded-md shadow overflow-hidden">
+      {/* Image Section */}
+      <div className="relative">
+        <img
+          src="/images/monsoon.webp"
+          alt="Monsoon Preparation"
+          className="w-full h-48 object-cover"
+        />
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-4 py-2 text-white">
+          <h2 className="text-lg font-semibold">Monsoon Preparation</h2>
+          <p className="text-sm">June - September</p>
+        </div>
+      </div>
+
+      {/* Tips List */}
+      <ul className="p-4 space-y-2 text-gray-800 text-sm">
+        <li>• Ensure proper drainage in fields</li>
+        <li>• Apply preventive fungicide spray</li>
+        <li>• Check and repair bunds</li>
+        <li>• Prepare for heavy rainfall</li>
+      </ul>
+
+      {/* Action Buttons */}
+      <div className="flex justify-between px-4 pb-4">
+        <button className="border border-green-600 text-green-700 px-4 py-2 rounded">
+          <div className="flex items-center gap-1">
+            <IoChatbox className="text-lg" />
+            Ask More
+          </div>
+        </button>
+        <button className="bg-orange-500 text-white px-4 py-2 rounded">
+          <div className="flex items-center gap-1">
+            <FaBookmark className="text-lg" />
+            Save Tip
+          </div>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default MonsoonCard;

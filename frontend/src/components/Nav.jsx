@@ -1,7 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { IoHome, IoChatbox } from "react-icons/io5";
-import { FaCamera, FaUser } from "react-icons/fa";
-import { RiPlantFill } from "react-icons/ri";
+import { IoHome, IoChatbox, FaCamera, FaUser, RiPlantFill } from "./icons";
 
 function Navbar() {
   const linkClasses = ({ isActive }) =>
@@ -10,7 +8,7 @@ function Navbar() {
     }`;
 
   return (
-    <div className="flex fixed bottom-0 left-0 right-0 justify-evenly bg-gray-200 py-2">
+    <div className="flex fixed bottom-0 left-0 right-0 justify-evenly bg-gray-200 py-2 z-50">
       <NavLink to="/home" className={linkClasses} end>
         <IoHome size={20} />
         <span>Home</span>
