@@ -12,7 +12,9 @@ import {
     getTipsByTag,
     updateTip,
     deleteTip,
-    getMyTips
+    getMyTips,
+    getPopularTips,
+    getTipsByDistrictForFarmer
 } from '../controllers/tip.controller.js';
 import { validate } from '../middlewares/validation.middleware.js';
 import { mongoIdValidator } from '../validators/common.validators.js';
@@ -26,6 +28,7 @@ const router = Router();
 
 // --- PUBLIC ROUTES ---
 router.route('/').get(getAllTips);
+router.route('/popular').get(getPopularTips); // New route for popular tips
 router.route('/tags').get(getAllTags);
 router.route('/tag/:tagId').get(mongoIdValidator('tagId'), validate, getTipsByTag);
 
@@ -57,6 +60,9 @@ router.route('/submit')
         validate,
         submitTipByFarmer
     );
+
+// New route for farmers to get tips from their district
+router.route('/by-district').get(verifyJWT(['farmer']), getTipsByDistrictForFarmer);
 
 // --- EXPERT-SPECIFIC ROUTES ---
 router.route('/')

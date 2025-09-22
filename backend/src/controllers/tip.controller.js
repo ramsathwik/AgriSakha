@@ -63,6 +63,7 @@ export const createTipByExpert = asyncHandler(async (req, res) => {
 
 export const submitTipByFarmer = asyncHandler(async (req, res) => {
     const { title, content, tags } = req.body;
+    const farmerDistrict = req.farmer.address.district; // Get district from authenticated farmer
     
     const imageLocalPath = req.file?.path;
     let imageAsset;
@@ -81,6 +82,7 @@ export const submitTipByFarmer = asyncHandler(async (req, res) => {
         content,
         tags: tagIds,
         authorFarmer: req.farmer._id,
+        authorDistrict: farmerDistrict, // Save the district
         image: imageAsset ? { url: imageAsset.secure_url, public_id: imageAsset.public_id } : undefined,
         status: 'pending',
     });
@@ -106,6 +108,36 @@ export const getAllTips = asyncHandler(async (req, res) => {
 
     return res.status(200).json(
         new ApiResponse(200, tips, "Tips retrieved successfully.")
+    );
+});
+
+export const getPopularTips = asyncHandler(async (req, res) => {
+    const popularTips = await Tip.find({ status: 'published' })
+        .sort({ likesCount: -1 })
+        .limit(10) // Limit to top 10 popular tips
+        .populate('author', 'fullName email')
+        .populate('authorFarmer', 'fullName')
+        .populate('tags', 'name');
+
+    return res.status(200).json(
+        new ApiResponse(200, popularTips, "Popular tips retrieved successfully.")
+    );
+});
+
+export const getTipsByDistrictForFarmer = asyncHandler(async (req, res) => {
+    const farmer = req.farmer;
+
+    const tipsInDistrict = await Tip.find({
+        status: 'published',
+        authorDistrict: farmer.address.district,
+        authorFarmer: { $ne: farmer._id } // Exclude tips from the farmer making the request
+    })
+    .sort({ createdAt: -1 })
+    .populate('authorFarmer', 'fullName')
+    .populate('tags', 'name');
+    
+    return res.status(200).json(
+        new ApiResponse(200, tipsInDistrict, `Tips from your district retrieved successfully.`)
     );
 });
 
@@ -137,7 +169,6 @@ export const updateTip = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Tip not found.");
     }
     
-    // Authorization: Check if the current user is the author
     const isAuthor = (tip.author && tip.author.equals(userId)) || (tip.authorFarmer && tip.authorFarmer.equals(userId));
     if (!isAuthor) {
         throw new ApiError(403, "You are not authorized to update this tip.");
@@ -151,7 +182,6 @@ export const updateTip = asyncHandler(async (req, res) => {
         tip.tags = await getOrCreateTags(tagNames);
     }
     
-    // Image handling: if a new image is provided, replace the old one
     if (req.file) {
         const imageLocalPath = req.file.path;
         const newImageAsset = await uploadOnCloudinary(imageLocalPath);
@@ -159,7 +189,6 @@ export const updateTip = asyncHandler(async (req, res) => {
             throw new ApiError(500, "Failed to upload new image.");
         }
         
-        // If there was an old image, delete it from Cloudinary
         if (tip.image && tip.image.public_id) {
             await deleteFromCloudinary(tip.image.public_id);
         }
@@ -193,26 +222,21 @@ export const deleteTip = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Tip not found.");
     }
     
-    // Authorization: Check if the current user is the author
     const isAuthor = (tip.author && tip.author.equals(userId)) || (tip.authorFarmer && tip.authorFarmer.equals(userId));
     if (!isAuthor) {
         throw new ApiError(403, "You are not authorized to delete this tip.");
     }
     
-    // Start a session for transaction-like behavior
     const session = await mongoose.startSession();
     try {
         await session.withTransaction(async () => {
-            // 1. Delete the tip document
             await Tip.findByIdAndDelete(tip._id, { session });
-            // 2. Delete all likes associated with the tip
             await Like.deleteMany({ tip: tip._id }, { session });
         });
     } finally {
         session.endSession();
     }
     
-    // 3. After DB operations are successful, delete the image from Cloudinary
     if (tip.image && tip.image.public_id) {
         await deleteFromCloudinary(tip.image.public_id);
     }
@@ -295,6 +319,7 @@ export const rejectTip = asyncHandler(async (req, res) => {
 });
 
 
+// --- TAGS & FILTERING ---
 export const getAllTags = asyncHandler(async (req, res) => {
     const tags = await Tag.find({}).sort({ name: 1 });
     return res.status(200).json(

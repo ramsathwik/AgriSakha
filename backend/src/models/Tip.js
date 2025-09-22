@@ -19,6 +19,10 @@ const tipSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Farmer',
     },
+    authorDistrict: {
+        type: String,
+        index: true, // Index for efficient querying
+    },
     image: {
         url: { type: String },
         public_id: { type: String },
@@ -30,7 +34,7 @@ const tipSchema = new mongoose.Schema({
     status: {
         type: String,
         enum: ['published', 'pending', 'rejected'],
-        default: 'pending', // Default is now pending
+        default: 'pending',
         index: true,
     },
     rejectionReason: {
