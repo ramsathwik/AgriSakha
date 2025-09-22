@@ -15,6 +15,7 @@ const requiredEnvVars = [
   'TWILIO_AUTH_TOKEN',
   'TWILIO_PHONE_NUMBER',
   'SMS_COUNTRY_CODE',
+  'EXPERT_REGISTRATION_SECRET_KEY', // New variable
 ];
 
 
@@ -48,7 +49,11 @@ const config = {
   },
   sms: {
     countryCode: process.env.SMS_COUNTRY_CODE,
-  }
+  },
+  features: {
+    tipsEnabled: process.env.FEATURE_TIPS_ENABLED === 'true',
+  },
+  expertSecret: process.env.EXPERT_REGISTRATION_SECRET_KEY,
 };
 
 export default Object.freeze(config);

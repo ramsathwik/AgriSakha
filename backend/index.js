@@ -50,10 +50,27 @@ app.get('/health', generalApiLimiter, (req, res) => {
 
 // --- Routes ---
 import authRouter from "./src/routes/auth.routes.js";
-
-// Mount the authentication router with its specific rate limiter
 app.use("/api/v1/auth", authLimiter, authRouter);
 
+// --- Conditionally Loaded Feature Routes ---
+if (config.features.tipsEnabled) {
+    // Import routers for the "Tips" feature
+    logger.info("Feature 'TIPS' is ENABLED. Mounting related routes.");
+}
+    // Expert auth routes
+const expertAuthLimiter = rateLimit({ // Using a separate limiter for experts
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: 'Too many authentication requests from this IP, please try again after 15 minutes.',
+  handler: (req, res, next, options) => {
+      throw new ApiError(options.statusCode, options.message);
+  }
+});
+    
+import expertAuthRouter from "./src/routes/expert.auth.routes.js";
+app.use("/api/v1/experts/auth", expertAuthLimiter, expertAuthRouter);
 
 // --- Global Error Handler ---
 app.use((err, req, res, next) => {

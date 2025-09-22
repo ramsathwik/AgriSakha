@@ -120,7 +120,7 @@ export const verifyOtpAndLogin = asyncHandler(async (req, res) => {
     farmer.phoneOtpExpires = undefined;
     await farmer.save({ validateBeforeSave: false });
 
-    const token = generateJWT(farmer);
+    const token = generateJWT(farmer, 'farmer');
 
     const loggedInFarmer = await Farmer.findById(farmer._id).select("-phoneOtp -phoneOtpExpires");
 

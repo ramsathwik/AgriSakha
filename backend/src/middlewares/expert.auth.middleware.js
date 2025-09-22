@@ -1,9 +1,9 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { verifyJWT } from "../utils/JwtUtils.js";
-import Farmer from "../models/Farmer.js";
+import FarmingExpert from "../models/FarmingExpert.js";
 
-export const verifyFarmerJWT = asyncHandler(async (req, res, next) => {
+export const verifyExpertJWT = asyncHandler(async (req, res, next) => {
     const token = req.cookies?.accessToken || req.headers?.authorization?.split("Bearer ")[1];
 
     if (!token) {
@@ -11,15 +11,17 @@ export const verifyFarmerJWT = asyncHandler(async (req, res, next) => {
     }
 
     const decodedToken = verifyJWT(token);
-    if (!decodedToken || decodedToken.role !== 'farmer') {
+
+    // Check if token is valid and has the correct role
+    if (!decodedToken || decodedToken.role !== 'expert') {
         throw new ApiError(401, "Invalid access token for this resource.");
     }
 
-    const farmer = await Farmer.findById(decodedToken.userId).select("-phoneOtp -phoneOtpExpires");
-    if (!farmer) {
-        throw new ApiError(401, "Invalid access token. Farmer not found.");
+    const expert = await FarmingExpert.findById(decodedToken.userId).select("-password");
+    if (!expert) {
+        throw new ApiError(401, "Invalid access token. Expert not found.");
     }
 
-    req.farmer = farmer;
+    req.expert = expert;
     next();
 });
