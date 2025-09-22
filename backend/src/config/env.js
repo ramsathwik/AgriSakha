@@ -56,12 +56,16 @@ const config = {
   },
   features: {
     tipsEnabled: process.env.FEATURE_TIPS_ENABLED === 'true',
+    chatEnabled: process.env.FEATURE_CHAT_ENABLED === 'true', 
   },
   expertSecret: process.env.EXPERT_REGISTRATION_SECRET_KEY,
   cloudinary: { 
     cloudName: process.env.CLOUDINARY_CLOUD_NAME,
     apiKey: process.env.CLOUDINARY_API_KEY,
     apiSecret: process.env.CLOUDINARY_API_SECRET,
+  },
+  ml: { 
+    modelEndpoint: process.env.ML_MODEL_ENDPOINT
   }
 };
 
