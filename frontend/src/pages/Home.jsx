@@ -12,38 +12,109 @@ import {
 } from "../components/icons";
 import { NavLink } from "react-router-dom";
 import { IoIosNotifications } from "react-icons/io";
+import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 function Home() {
+  const [isListening, setIsListening] = useState(false);
+  const timeoutRef = useRef(null);
+  let navigate = useNavigate();
+  function handleOnClick(suggestions) {
+    navigate("/chat", { state: suggestions });
+  }
+
+  const handleVoiceClick = () => {
+    setIsListening(true);
+
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    // Set new timeout
+    timeoutRef.current = setTimeout(() => {
+      setIsListening(false);
+      timeoutRef.current = null; // reset
+    }, 3000);
+  };
+  const chatSuggestions = [
+    "Track current market prices for major crops.",
+    "Plan selling based on peak price periods.",
+    "Compare prices across local and nearby markets.",
+    "Store crops properly to avoid post-harvest losses.",
+    "Monitor crops for pests and diseases.",
+    "Use organic compost or fertilizers.",
+    "Irrigate crops early morning or late evening.",
+    "Rotate crops each season.",
+    "Check local weather forecasts.",
+  ];
+
   const cards = [
     {
       title: "Pest Control",
       icon: <FaBug className="w-6 h-6 text-red-600" />,
       bg: "bg-red-100",
+      suggestions: [
+        "Check for early signs of pest infestation in your crops.",
+        "Use neem oil or bio-pesticides to control common pests.",
+        "Rotate crops to prevent pest buildup in the soil.",
+        "Keep field edges clean to avoid pest hiding spots.",
+      ],
     },
     {
       title: "Weather Update",
       icon: <CiCloud className="w-6 h-6 text-blue-500" />,
       bg: "bg-blue-100",
+      suggestions: [
+        "Check daily rainfall forecasts to plan irrigation.",
+        "Protect seedlings from heavy winds or storms.",
+        "Adjust fertilizer application according to upcoming rain.",
+        "Monitor temperature fluctuations for sensitive crops.",
+      ],
     },
     {
       title: "Fertilizer Tips",
       icon: <Sprout className="w-6 h-6 text-green-500" />,
       bg: "bg-green-100",
+      suggestions: [
+        "Apply fertilizers based on soil nutrient tests.",
+        "Split fertilizer doses to avoid nutrient loss.",
+        "Use organic compost along with chemical fertilizers.",
+        "Ensure proper irrigation after applying fertilizers.",
+      ],
     },
     {
       title: "Crop Care",
       icon: <RiPlantFill className="w-6 h-6 text-yellow-600" />,
       bg: "bg-yellow-100",
+      suggestions: [
+        "Regularly monitor crop growth stages.",
+        "Ensure proper spacing between plants for healthy growth.",
+        "Mulch soil to retain moisture and reduce weeds.",
+        "Prune damaged leaves and branches promptly.",
+      ],
     },
     {
       title: "Government Schemes",
       icon: <RiGovernmentFill className="w-6 h-6 text-purple-600" />,
       bg: "bg-purple-100",
+      suggestions: [
+        "Check for subsidies available for irrigation equipment.",
+        "Apply for crop insurance before sowing season.",
+        "Explore schemes for organic farming support.",
+        "Stay updated on government loans and grants for farmers.",
+      ],
     },
     {
       title: "Market Prices",
       icon: <FaRupeeSign className="w-6 h-6 text-orange-600" />,
       bg: "bg-orange-100",
+      suggestions: [
+        "Track current market prices for major crops.",
+        "Plan selling based on peak price periods.",
+        "Compare prices across local and nearby markets.",
+        "Store crops properly to avoid post-harvest losses.",
+      ],
     },
   ];
 
@@ -72,7 +143,11 @@ function Home() {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-2 gap-2">
-          <div className="bg-white flex flex-col items-center justify-center rounded-xl shadow-md cursor-pointer p-3 hover:shadow-lg transition">
+          <NavLink
+            to="/chat"
+            className="bg-white flex flex-col items-center justify-center rounded-xl shadow-md cursor-pointer p-3 hover:shadow-lg transition"
+            state={chatSuggestions}
+          >
             <div className="p-4 bg-green-100 rounded-full mb-3">
               <IoChatbubble className="text-green-600 text-xl" />
             </div>
@@ -80,19 +155,37 @@ function Home() {
               <p className="text-sm font-medium text-gray-800">Ask Question</p>
               <p className="text-xs text-gray-500">Type your question</p>
             </div>
-          </div>
+          </NavLink>
 
-          <div className="bg-white flex flex-col items-center justify-center rounded-xl shadow-md cursor-pointer p-3 hover:shadow-lg transition">
-            <div className="p-4 bg-blue-100 rounded-full mb-3">
-              <FaMicrophone className="text-blue-600 text-xl" />
+          <div
+            className="flex flex-col items-center justify-center rounded-xl shadow-md cursor-pointer p-3 hover:shadow-lg transition bg-white text-gray-800"
+            onClick={handleVoiceClick}
+          >
+            {/* Mic Circle */}
+            <div
+              className={`p-4 rounded-full mb-3 transition-colors duration-300
+      ${
+        isListening
+          ? "bg-red-600 text-white animate-pulse"
+          : "bg-blue-100 text-blue-600"
+      }`}
+            >
+              <FaMicrophone className="text-xl" />
             </div>
+
+            {/* Text */}
             <div className="text-center">
-              <p className="text-sm font-medium text-gray-800">Voice Query</p>
+              <p className="text-sm font-medium">
+                {isListening ? "Recording..." : "Voice Query"}
+              </p>
               <p className="text-xs text-gray-500">Speak Your Question</p>
             </div>
           </div>
 
-          <div className="bg-white flex items-center justify-start gap-4 rounded-xl shadow-md cursor-pointer p-6 hover:shadow-lg transition col-span-2">
+          <NavLink
+            to="/camera"
+            className="bg-white flex items-center justify-start gap-4 rounded-xl shadow-md cursor-pointer p-6 hover:shadow-lg transition col-span-2"
+          >
             <div className="p-4 bg-orange-100 rounded-full flex items-center justify-center">
               <IoMdCamera className="text-orange-600 text-xl" />
             </div>
@@ -102,7 +195,7 @@ function Home() {
                 Upload photo for instant analysis
               </p>
             </div>
-          </div>
+          </NavLink>
         </div>
 
         {/* Quick Help Section */}
@@ -113,6 +206,9 @@ function Home() {
               <div
                 key={i}
                 className="bg-white flex flex-col items-center justify-center rounded-xl shadow-md cursor-pointer p-3 hover:shadow-lg transition"
+                onClick={() => {
+                  handleOnClick(card.suggestions);
+                }}
               >
                 <div className={`p-4 ${card.bg} rounded-full mb-3`}>
                   {card.icon}

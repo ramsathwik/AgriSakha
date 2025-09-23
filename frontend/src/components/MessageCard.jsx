@@ -1,10 +1,10 @@
 import { FaBell } from "../components/icons";
 const colorMap = {
-  red: "bg-red-200 text-red-700",
-  yellow: "bg-yellow-200 text-yellow-700",
-  blue: "bg-blue-200 text-blue-700",
-  orange: "bg-orange-200 text-orange-700",
-  green: "bg-green-200 text-green-700",
+  red: "bg-red-200 text-red-700 font-semibold",
+  yellow: "bg-yellow-200 text-yellow-700 font-semibold",
+  blue: "bg-blue-200 text-blue-700 font-semibold",
+  orange: "bg-orange-200 text-orange-700 font-semibold",
+  green: "bg-green-200 text-green-700 font-semibold",
 };
 
 function MsgCard({ msg: { title, tag, tagColor, content, time } }) {

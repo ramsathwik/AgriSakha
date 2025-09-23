@@ -11,3 +11,6 @@
 body {
   @apply no-scrollbar;
 }
+.scroll-container::-webkit-scrollbar-thumb {
+  height: 30px; /* small scrollbar thumb */
+}

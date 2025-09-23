@@ -2,6 +2,18 @@ import { NavLink } from "react-router-dom";
 import { IoHome, IoChatbox, FaCamera, FaUser, RiPlantFill } from "./icons";
 
 function Navbar() {
+  const chatSuggestions = [
+    "Track current market prices for major crops.",
+    "Plan selling based on peak price periods.",
+    "Compare prices across local and nearby markets.",
+    "Store crops properly to avoid post-harvest losses.",
+    "Monitor crops for pests and diseases.",
+    "Use organic compost or fertilizers.",
+    "Irrigate crops early morning or late evening.",
+    "Rotate crops each season.",
+    "Check local weather forecasts.",
+  ];
+
   const linkClasses = ({ isActive }) =>
     `flex flex-col items-center text-sm ${
       isActive ? "text-green-600" : "text-gray-400"
@@ -14,7 +26,7 @@ function Navbar() {
         <span>Home</span>
       </NavLink>
 
-      <NavLink to="/chat" className={linkClasses}>
+      <NavLink to="/chat" className={linkClasses} state={chatSuggestions}>
         <IoChatbox size={20} />
         <span>Chat</span>
       </NavLink>

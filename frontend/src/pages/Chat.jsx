@@ -1,7 +1,14 @@
 import { IoMdCamera } from "react-icons/io";
 import { IoSend } from "react-icons/io5";
-
+import { useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 function Chat() {
+  let [suggestions, setSuggesions] = useState([]);
+  let location = useLocation();
+  useEffect(() => {
+    setSuggesions(location.state);
+  }, [suggestions]);
+
   return (
     <div className="flex flex-col h-screen bg-green-50">
       {/* Header */}
@@ -10,31 +17,8 @@ function Chat() {
       </div>
 
       {/* Scrollable Chat Area */}
-      <div className="flex-1 pt-20 pb-28 px-3 overflow-y-scroll scroll-smooth flex flex-col space-y-2">
-        {[
-          "Pest control for coconut trees",
-          "Best time to plant rice",
-          "Organic fertilizer recommendations",
-          "Weather forecast for farming",
-          "Soil testing tips",
-          "How to increase yield",
-          "Water management practices",
-          "Pest control for coconut trees",
-          "Best time to plant rice",
-          "Organic fertilizer recommendations",
-          "Weather forecast for farming",
-          "Soil testing tips",
-          "How to increase yield",
-          "Water management practices",
-          "Pest control for coconut trees",
-          "Best time to plant rice",
-          "Organic fertilizer recommendations",
-          "Weather forecast for farming",
-          "Soil testing tips",
-          "How to increase yield",
-          "Water management practices",
-          ,
-        ].map((suggestion, i) => (
+      <div className="flex-1 pt-20 pb-36 px-3 overflow-y-auto scroll-smooth flex flex-col space-y-2 ">
+        {suggestions.map((suggestion, i) => (
           <div
             key={i}
             className="w-fit bg-white px-4 py-2 rounded-full border border-green-200 text-green-700 cursor-pointer shadow-sm hover:bg-green-50 self-start"
