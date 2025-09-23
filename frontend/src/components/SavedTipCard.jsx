@@ -1,6 +1,6 @@
 import { IoChatbox, FaBookmark } from "../components/icons";
-
-function MonsoonCard({ card: { title, period, image, tips } }) {
+import { AiFillDelete } from "react-icons/ai";
+function SavedTipCard({ card: { title, period, image, tips } }) {
   return (
     <div className="bg-white rounded-md shadow overflow-hidden">
       {/* Image Section */}
@@ -33,8 +33,8 @@ function MonsoonCard({ card: { title, period, image, tips } }) {
         </button>
         <button className="bg-orange-500 text-white px-4 py-2 rounded">
           <div className="flex items-center gap-1">
-            <FaBookmark className="text-lg" />
-            Save Tip
+            <AiFillDelete className="text-lg" />
+            Delete
           </div>
         </button>
       </div>
@@ -42,4 +42,4 @@ function MonsoonCard({ card: { title, period, image, tips } }) {
   );
 }
 
-export default MonsoonCard;
+export default SavedTipCard;

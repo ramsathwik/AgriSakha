@@ -17,6 +17,9 @@ import HarvestTips from "../pages/Tips/HarvestTips.jsx";
 import All from "../pages/Notifications/All.jsx";
 import Unread from "../pages/Notifications/Unread.jsx";
 import Urgent from "../pages/Notifications/Urgent.jsx";
+import Profiletabs from "../components/ProfileTabs.jsx";
+import SavedTips from "../pages/Profile/Saved.jsx";
+import Contacts from "../pages/Profile/Contacts.jsx";
 import { Navigate } from "react-router-dom";
 const router = createBrowserRouter([
   {
@@ -80,6 +83,20 @@ const router = createBrowserRouter([
           {
             path: "/profile",
             element: <Profile />,
+            children: [
+              {
+                path: "",
+                element: <Profiletabs />,
+              },
+              {
+                path: "saved-tips",
+                element: <SavedTips />,
+              },
+              {
+                path: "emergency-contacts",
+                element: <Contacts />,
+              },
+            ],
           },
           {
             path: "/notifications",
