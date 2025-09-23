@@ -20,6 +20,9 @@ const requiredEnvVars = [
   'CLOUDINARY_API_KEY',    
   'CLOUDINARY_API_SECRET', 
 ];
+if (process.env.FEATURE_CHAT_ENABLED === 'true') {
+    requiredEnvVars.push('ML_MODEL_URL');
+}
 
 
 const checkEnvVars = () => {
@@ -65,7 +68,7 @@ const config = {
     apiSecret: process.env.CLOUDINARY_API_SECRET,
   },
   ml: { 
-    modelEndpoint: process.env.ML_MODEL_ENDPOINT
+    modelUrl: process.env.ML_MODEL_URL
   }
 };
 
