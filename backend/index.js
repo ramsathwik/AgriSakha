@@ -64,13 +64,22 @@ app.use("/api/v1/experts", generalApiLimiter, expertRouter);
 // --- Conditionally Loaded Feature Routes ---
 if (config.features.tipsEnabled) {
     logger.info("Feature 'TIPS' is ENABLED. Mounting related routes.");
-} 
-import tipRouter from "./src/routes/tip.routes.js";
-import likeRouter from "./src/routes/like.routes.js"; 
+    
+    // Lazy load routers only when feature is enabled
+    const tipRouter = (await import("./src/routes/tip.routes.js")).default;
+    const likeRouter = (await import("./src/routes/like.routes.js")).default; 
 
-app.use("/api/v1/tips", generalApiLimiter, tipRouter);
-app.use("/api/v1/tags", generalApiLimiter, tipRouter); // Note: /tags is part of tipRouter
-app.use("/api/v1/likes", generalApiLimiter, likeRouter); 
+    app.use("/api/v1/tips", generalApiLimiter, tipRouter);
+    app.use("/api/v1/tags", generalApiLimiter, tipRouter); // Note: /tags is part of tipRouter
+    app.use("/api/v1/likes", generalApiLimiter, likeRouter); 
+}
+
+// New Chat Feature Routes
+if (config.features.chatEnabled) {
+    logger.info("Feature 'CHAT' is ENABLED. Mounting related routes.");
+    const chatRouter = (await import("./src/routes/chat.routes.js")).default;
+    app.use("/api/v1/chats", generalApiLimiter, chatRouter);
+}
 
 
 // --- Global Error Handler ---
