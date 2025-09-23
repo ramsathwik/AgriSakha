@@ -14,6 +14,9 @@ import SeasonalTips from "../pages/Tips/Seasonaltips.jsx";
 import ProtectionTips from "../pages/Tips/Protectiontips.jsx";
 import CropcareTips from "../pages/Tips/Cropcaretips.jsx";
 import HarvestTips from "../pages/Tips/HarvestTips.jsx";
+import All from "../pages/Notifications/All.jsx";
+import Unread from "../pages/Notifications/Unread.jsx";
+import Urgent from "../pages/Notifications/Urgent.jsx";
 import { Navigate } from "react-router-dom";
 const router = createBrowserRouter([
   {
@@ -78,17 +81,30 @@ const router = createBrowserRouter([
             path: "/profile",
             element: <Profile />,
           },
+          {
+            path: "/notifications",
+            element: <Notifications />,
+            children: [
+              {
+                index: true,
+                element: <Navigate to="all" replace />,
+              },
+              ,
+              {
+                path: "all",
+                element: <All />,
+              },
+              {
+                path: "unread",
+                element: <Unread />,
+              },
+              {
+                path: "urgent",
+                element: <Urgent />,
+              },
+            ],
+          },
         ],
-      },
-    ],
-  },
-  {
-    path: "/notifications",
-    element: <NotifyLayout />,
-    children: [
-      {
-        index: true,
-        element: <Notifications></Notifications>,
       },
     ],
   },

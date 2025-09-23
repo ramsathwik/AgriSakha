@@ -1,5 +1,5 @@
 import { IoHome, IoChatbox } from "react-icons/io5";
-import { FaCamera, FaUser } from "react-icons/fa";
+import { FaCamera, FaUser, FaBell } from "react-icons/fa";
 import { RiPlantFill } from "react-icons/ri";
 import { FaBug } from "react-icons/fa6";
 import { CiCloud } from "react-icons/ci";
@@ -30,4 +30,5 @@ export {
   AiOutlineScissor,
   FaBookmark,
   AiFillEdit,
+  FaBell,
 };

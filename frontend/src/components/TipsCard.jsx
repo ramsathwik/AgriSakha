@@ -1,6 +1,6 @@
 import { IoChatbox, FaBookmark } from "../components/icons";
 
-function MonsoonCard() {
+function MonsoonCard({ card: { title, period, image, tips } }) {
   return (
     <div className="bg-white rounded-md shadow overflow-hidden">
       {/* Image Section */}
@@ -11,17 +11,16 @@ function MonsoonCard() {
           className="w-full h-48 object-cover"
         />
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent px-4 py-2 text-white">
-          <h2 className="text-lg font-semibold">Monsoon Preparation</h2>
-          <p className="text-sm">June - September</p>
+          <h2 className="text-lg font-semibold">{title}</h2>
+          <p className="text-sm">{period}</p>
         </div>
       </div>
 
       {/* Tips List */}
       <ul className="p-4 space-y-2 text-gray-800 text-sm">
-        <li>• Ensure proper drainage in fields</li>
-        <li>• Apply preventive fungicide spray</li>
-        <li>• Check and repair bunds</li>
-        <li>• Prepare for heavy rainfall</li>
+        {tips.map((tip, i) => (
+          <li key={i}>{tip}</li>
+        ))}
       </ul>
 
       {/* Action Buttons */}
